@@ -4249,7 +4249,6 @@ def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[st
     pszPeriodLabel: str = objMatch.group(1)
     pszTimeLabel: str = objMatch.group(2)
     pszCompanyLabel: str = objMatch.group(3)
-    objTriggerCompany: str = "第一インキュ"
     objAllowedCompanies: set[str] = {
         "第一インキュ",
         "第二インキュ",
@@ -4261,8 +4260,6 @@ def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[st
         "本部",
     }
     if pszCompanyLabel not in objAllowedCompanies:
-        return None
-    if pszCompanyLabel != objTriggerCompany:
         return None
     pszDirectory: str = os.path.dirname(pszStep0007Path)
     return build_cp_company_step0008_vertical(
