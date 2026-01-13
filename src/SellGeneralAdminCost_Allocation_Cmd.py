@@ -4284,6 +4284,13 @@ def parse_time_label_range(pszTimeLabel: str) -> Optional[Tuple[Tuple[int, int],
     return (iStartYear, iStartMonth), (iEndYear, iEndMonth)
 
 
+def ensure_cp_step0009_directory() -> str:
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0009")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    return pszTargetDirectory
+
+
 def build_cp_company_step0009_vertical(
     pszDirectory: str,
     pszTimeLabel: str,
@@ -4322,9 +4329,7 @@ def build_cp_company_step0009_vertical(
     )
     write_tsv_rows(pszOutputPath, objOutputRows)
 
-    pszScriptDirectory: str = os.path.dirname(__file__)
-    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0009")
-    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetDirectory: str = ensure_cp_step0009_directory()
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
     return pszOutputPath
