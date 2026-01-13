@@ -4286,6 +4286,14 @@ def ensure_cp_step0009_directory() -> str:
     return pszTargetDirectory
 
 
+def copy_cp_step0009_file(pszOutputPath: str) -> None:
+    if not pszOutputPath or not os.path.isfile(pszOutputPath):
+        return
+    pszTargetDirectory: str = ensure_cp_step0009_directory()
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
+
+
 def build_cp_company_step0009_vertical(
     pszDirectory: str,
     pszTimeLabel: str,
@@ -4323,10 +4331,7 @@ def build_cp_company_step0009_vertical(
         f"0001_CP別_step0009_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
     )
     write_tsv_rows(pszOutputPath, objOutputRows)
-
-    pszTargetDirectory: str = ensure_cp_step0009_directory()
-    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
-    shutil.copy2(pszOutputPath, pszTargetPath)
+    copy_cp_step0009_file(pszOutputPath)
     return pszOutputPath
 
 
