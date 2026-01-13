@@ -4213,7 +4213,16 @@ def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]
     pszPeriodLabel: str = objMatch.group(1)
     pszTimeLabel: str = objMatch.group(2)
     pszGroupLabel: str = objMatch.group(3)
-    if pszGroupLabel != "計上グループ":
+    objTriggerGroup: str = "受託事業-施設運営"
+    objAllowedGroups: set[str] = {
+        "受託事業-施設運営",
+        "受託事業-その他",
+        "自社-施設運営",
+        "自社-その他",
+    }
+    if pszGroupLabel not in objAllowedGroups:
+        return None
+    if pszGroupLabel != objTriggerGroup:
         return None
     pszDirectory: str = os.path.dirname(pszStep0007Path)
     return build_cp_group_step0008_vertical(
