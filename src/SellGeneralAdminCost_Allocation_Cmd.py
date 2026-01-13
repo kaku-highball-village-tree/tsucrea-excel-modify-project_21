@@ -4236,7 +4236,7 @@ def build_cp_company_step0008_vertical(
     )
     write_tsv_rows(pszOutputPath, objRows)
     pszScriptDirectory: str = os.path.dirname(__file__)
-    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0002_CP別_step0008")
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0008")
     os.makedirs(pszTargetDirectory, exist_ok=True)
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
