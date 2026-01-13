@@ -4164,6 +4164,146 @@ def build_prior_range_for_cumulative(
     return None
 
 
+def build_cp_group_step0008_vertical(
+    pszDirectory: str,
+    pszPeriodLabel: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objGroupOrder: List[str] = [
+        "受託事業-施設運営",
+        "受託事業-その他",
+        "自社-施設運営",
+        "自社-その他",
+    ]
+    pszPrefix: str = (
+        f"0002_CP別_step0007_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_"
+    )
+    objRows: List[List[str]] = []
+    for pszGroup in objGroupOrder:
+        pszInputPath: str = os.path.join(
+            pszDirectory,
+            f"{pszPrefix}{pszGroup}_vertical.tsv",
+        )
+        if not os.path.isfile(pszInputPath):
+            return None
+        objRows.extend(read_tsv_rows(pszInputPath))
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0002_CP別_step0008_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_計上グループ_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objRows)
+
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0002_CP別_step0008")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
+    return pszOutputPath
+
+
+def build_cp_company_step0008_vertical(
+    pszDirectory: str,
+    pszPeriodLabel: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objCompanyOrder: List[str] = [
+        "第一インキュ",
+        "第二インキュ",
+        "第三インキュ",
+        "第四インキュ",
+        "事業開発",
+        "子会社",
+        "投資先",
+        "本部",
+    ]
+    pszPrefix: str = (
+        f"0001_CP別_step0007_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_"
+    )
+    objRows: List[List[str]] = []
+    for pszCompany in objCompanyOrder:
+        pszInputPath: str = os.path.join(
+            pszDirectory,
+            f"{pszPrefix}{pszCompany}_vertical.tsv",
+        )
+        if not os.path.isfile(pszInputPath):
+            return None
+        objRows.extend(read_tsv_rows(pszInputPath))
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0001_CP別_step0008_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objRows)
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0002_CP別_step0008")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
+    return pszOutputPath
+
+
+def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
+    pszFileName = os.path.basename(pszStep0007Path)
+    objMatch = re.match(
+        r"0001_CP別_step0007_(単月|累計)_損益計算書_(.+?)_(.+)_vertical\.tsv",
+        pszFileName,
+    )
+    if objMatch is None:
+        return None
+    pszPeriodLabel: str = objMatch.group(1)
+    pszTimeLabel: str = objMatch.group(2)
+    pszCompanyLabel: str = objMatch.group(3)
+    objAllowedCompanies: set[str] = {
+        "第一インキュ",
+        "第二インキュ",
+        "第三インキュ",
+        "第四インキュ",
+        "事業開発",
+        "子会社",
+        "投資先",
+        "本部",
+    }
+    if pszCompanyLabel not in objAllowedCompanies:
+        return None
+    pszDirectory: str = os.path.dirname(pszStep0007Path)
+    return build_cp_company_step0008_vertical(
+        pszDirectory,
+        pszPeriodLabel,
+        pszTimeLabel,
+    )
+
+
+def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
+    pszFileName = os.path.basename(pszStep0007Path)
+    objMatch = re.match(
+        r"0002_CP別_step0007_(単月|累計)_損益計算書_(.+?)_(.+)_vertical\.tsv",
+        pszFileName,
+    )
+    if objMatch is None:
+        return None
+    pszPeriodLabel: str = objMatch.group(1)
+    pszTimeLabel: str = objMatch.group(2)
+    pszGroupLabel: str = objMatch.group(3)
+    objTriggerGroup: str = "受託事業-施設運営"
+    objAllowedGroups: set[str] = {
+        "受託事業-施設運営",
+        "受託事業-その他",
+        "自社-施設運営",
+        "自社-その他",
+    }
+    if pszGroupLabel not in objAllowedGroups:
+        return None
+    if pszGroupLabel != objTriggerGroup:
+        return None
+    pszDirectory: str = os.path.dirname(pszStep0007Path)
+    return build_cp_group_step0008_vertical(
+        pszDirectory,
+        pszPeriodLabel,
+        pszTimeLabel,
+    )
+
+
 def create_cp_step0007_file_company(pszStep0006Path: str, pszPrefix: str) -> None:
     pszFileName = os.path.basename(pszStep0006Path)
     pszDirectory = os.path.dirname(pszStep0006Path)
@@ -4260,6 +4400,12 @@ def create_cp_step0007_file_company(pszStep0006Path: str, pszPrefix: str) -> Non
 
 def create_cp_step0007_file_0001(pszStep0006Path: str) -> None:
     create_cp_step0007_file_company(pszStep0006Path, "0001_CP別")
+    pszOutputPath = os.path.join(
+        os.path.dirname(pszStep0006Path),
+        os.path.basename(pszStep0006Path).replace("_step0006_", "_step0007_"),
+    )
+    if os.path.isfile(pszOutputPath):
+        try_create_cp_company_step0008_vertical(pszOutputPath)
 
 
 def create_cp_step0007_file_0002(pszStep0006Path: str) -> None:
@@ -4273,6 +4419,8 @@ def create_cp_step0007_file_0002(pszStep0006Path: str) -> None:
     if os.path.isfile(pszOutputPath):
         pszTargetPath = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
         shutil.copy2(pszOutputPath, pszTargetPath)
+        try_create_cp_group_step0008_vertical(pszOutputPath)
+        try_create_cp_group_step0008_vertical(pszTargetPath)
 
 
 def create_empty_previous_fiscal_cp_step0005_vertical(
