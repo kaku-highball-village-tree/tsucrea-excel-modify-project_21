@@ -4240,6 +4240,11 @@ def build_cp_company_step0008_vertical(
     os.makedirs(pszTargetDirectory, exist_ok=True)
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
+    if pszPeriodLabel == "累計":
+        build_cp_company_step0009_vertical(
+            pszDirectory,
+            pszTimeLabel,
+        )
     return pszOutputPath
 
 
@@ -4422,11 +4427,6 @@ def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[st
     )
     if pszStep0008Path is None:
         return None
-    if pszPeriodLabel == "累計":
-        build_cp_company_step0009_vertical(
-            pszDirectory,
-            pszTimeLabel,
-        )
     return pszStep0008Path
 
 
