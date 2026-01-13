@@ -4193,19 +4193,28 @@ def build_cp_group_step0008_vertical(
         f"0002_CP別_step0008_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_計上グループ_vertical.tsv",
     )
     write_tsv_rows(pszOutputPath, objRows)
+
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0002_CP別_step0008")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
     return pszOutputPath
 
 
 def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
     pszFileName = os.path.basename(pszStep0007Path)
     objMatch = re.match(
-        r"0002_CP別_step0007_(単月|累計)_損益計算書_(.+)_(.+)_vertical\.tsv",
+        r"0002_CP別_step0007_(単月|累計)_損益計算書_(.+?)_(.+)_vertical\.tsv",
         pszFileName,
     )
     if objMatch is None:
         return None
     pszPeriodLabel: str = objMatch.group(1)
     pszTimeLabel: str = objMatch.group(2)
+    pszGroupLabel: str = objMatch.group(3)
+    if pszGroupLabel != "計上グループ":
+        return None
     pszDirectory: str = os.path.dirname(pszStep0007Path)
     return build_cp_group_step0008_vertical(
         pszDirectory,
