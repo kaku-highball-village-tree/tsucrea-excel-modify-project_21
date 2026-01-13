@@ -4202,6 +4202,76 @@ def build_cp_group_step0008_vertical(
     return pszOutputPath
 
 
+def build_cp_company_step0008_vertical(
+    pszDirectory: str,
+    pszPeriodLabel: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objCompanyOrder: List[str] = [
+        "第一インキュ",
+        "第二インキュ",
+        "第三インキュ",
+        "第四インキュ",
+        "事業開発",
+        "子会社",
+        "投資先",
+        "本部",
+    ]
+    pszPrefix: str = (
+        f"0001_CP別_step0007_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_"
+    )
+    objRows: List[List[str]] = []
+    for pszCompany in objCompanyOrder:
+        pszInputPath: str = os.path.join(
+            pszDirectory,
+            f"{pszPrefix}{pszCompany}_vertical.tsv",
+        )
+        if not os.path.isfile(pszInputPath):
+            return None
+        objRows.extend(read_tsv_rows(pszInputPath))
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0001_CP別_step0008_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objRows)
+    return pszOutputPath
+
+
+def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
+    pszFileName = os.path.basename(pszStep0007Path)
+    objMatch = re.match(
+        r"0001_CP別_step0007_(単月|累計)_損益計算書_(.+?)_(.+)_vertical\.tsv",
+        pszFileName,
+    )
+    if objMatch is None:
+        return None
+    pszPeriodLabel: str = objMatch.group(1)
+    pszTimeLabel: str = objMatch.group(2)
+    pszCompanyLabel: str = objMatch.group(3)
+    objTriggerCompany: str = "第一インキュ"
+    objAllowedCompanies: set[str] = {
+        "第一インキュ",
+        "第二インキュ",
+        "第三インキュ",
+        "第四インキュ",
+        "事業開発",
+        "子会社",
+        "投資先",
+        "本部",
+    }
+    if pszCompanyLabel not in objAllowedCompanies:
+        return None
+    if pszCompanyLabel != objTriggerCompany:
+        return None
+    pszDirectory: str = os.path.dirname(pszStep0007Path)
+    return build_cp_company_step0008_vertical(
+        pszDirectory,
+        pszPeriodLabel,
+        pszTimeLabel,
+    )
+
+
 def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
     pszFileName = os.path.basename(pszStep0007Path)
     objMatch = re.match(
@@ -4328,6 +4398,12 @@ def create_cp_step0007_file_company(pszStep0006Path: str, pszPrefix: str) -> Non
 
 def create_cp_step0007_file_0001(pszStep0006Path: str) -> None:
     create_cp_step0007_file_company(pszStep0006Path, "0001_CP別")
+    pszOutputPath = os.path.join(
+        os.path.dirname(pszStep0006Path),
+        os.path.basename(pszStep0006Path).replace("_step0006_", "_step0007_"),
+    )
+    if os.path.isfile(pszOutputPath):
+        try_create_cp_company_step0008_vertical(pszOutputPath)
 
 
 def create_cp_step0007_file_0002(pszStep0006Path: str) -> None:
