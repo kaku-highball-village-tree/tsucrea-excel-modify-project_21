@@ -4164,6 +4164,56 @@ def build_prior_range_for_cumulative(
     return None
 
 
+def build_cp_group_step0008_vertical(
+    pszDirectory: str,
+    pszPeriodLabel: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objGroupOrder: List[str] = [
+        "受託事業-施設運営",
+        "受託事業-その他",
+        "自社-施設運営",
+        "自社-その他",
+    ]
+    pszPrefix: str = (
+        f"0002_CP別_step0007_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_"
+    )
+    objRows: List[List[str]] = []
+    for pszGroup in objGroupOrder:
+        pszInputPath: str = os.path.join(
+            pszDirectory,
+            f"{pszPrefix}{pszGroup}_vertical.tsv",
+        )
+        if not os.path.isfile(pszInputPath):
+            return None
+        objRows.extend(read_tsv_rows(pszInputPath))
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0002_CP別_step0008_{pszPeriodLabel}_損益計算書_{pszTimeLabel}_計上グループ_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objRows)
+    return pszOutputPath
+
+
+def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
+    pszFileName = os.path.basename(pszStep0007Path)
+    objMatch = re.match(
+        r"0002_CP別_step0007_(単月|累計)_損益計算書_(.+)_(.+)_vertical\.tsv",
+        pszFileName,
+    )
+    if objMatch is None:
+        return None
+    pszPeriodLabel: str = objMatch.group(1)
+    pszTimeLabel: str = objMatch.group(2)
+    pszDirectory: str = os.path.dirname(pszStep0007Path)
+    return build_cp_group_step0008_vertical(
+        pszDirectory,
+        pszPeriodLabel,
+        pszTimeLabel,
+    )
+
+
 def create_cp_step0007_file_company(pszStep0006Path: str, pszPrefix: str) -> None:
     pszFileName = os.path.basename(pszStep0006Path)
     pszDirectory = os.path.dirname(pszStep0006Path)
@@ -4273,6 +4323,8 @@ def create_cp_step0007_file_0002(pszStep0006Path: str) -> None:
     if os.path.isfile(pszOutputPath):
         pszTargetPath = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
         shutil.copy2(pszOutputPath, pszTargetPath)
+        try_create_cp_group_step0008_vertical(pszOutputPath)
+        try_create_cp_group_step0008_vertical(pszTargetPath)
 
 
 def create_empty_previous_fiscal_cp_step0005_vertical(
