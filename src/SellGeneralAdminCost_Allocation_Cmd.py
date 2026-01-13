@@ -4362,22 +4362,33 @@ def build_cp_group_step0009_vertical(
     if not objMonths:
         return None
 
-    pszBasePath: str = os.path.join(
-        pszDirectory,
-        f"0002_CP別_step0008_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
-    )
-    if not os.path.isfile(pszBasePath):
+    objNameCandidates: List[str] = ["計上カンパニー", "計上グループ"]
+    pszBasePath: Optional[str] = None
+    for pszSuffix in objNameCandidates:
+        pszCandidate = os.path.join(
+            pszDirectory,
+            f"0002_CP別_step0008_累計_損益計算書_{pszTimeLabel}_{pszSuffix}_vertical.tsv",
+        )
+        if os.path.isfile(pszCandidate):
+            pszBasePath = pszCandidate
+            break
+    if pszBasePath is None:
         return None
     objOutputRows: List[List[str]] = read_tsv_rows(pszBasePath)
 
     for objMonth in objMonths:
         iYear, iMonth = objMonth
         pszMonthLabel: str = f"{iYear}年{iMonth:02d}月"
-        pszSinglePath: str = os.path.join(
-            pszDirectory,
-            f"0002_CP別_step0008_単月_損益計算書_{pszMonthLabel}_計上カンパニー_vertical.tsv",
-        )
-        if not os.path.isfile(pszSinglePath):
+        pszSinglePath: Optional[str] = None
+        for pszSuffix in objNameCandidates:
+            pszCandidate = os.path.join(
+                pszDirectory,
+                f"0002_CP別_step0008_単月_損益計算書_{pszMonthLabel}_{pszSuffix}_vertical.tsv",
+            )
+            if os.path.isfile(pszCandidate):
+                pszSinglePath = pszCandidate
+                break
+        if pszSinglePath is None:
             return None
         objSingleRows: List[List[str]] = read_tsv_rows(pszSinglePath)
         objOutputRows = append_vertical_rows_horizontally(objOutputRows, objSingleRows)
