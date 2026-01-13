@@ -4366,7 +4366,7 @@ def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[st
     )
     if pszStep0008Path is None:
         return None
-    if pszPeriodLabel == "累計":
+    if os.path.basename(pszStep0008Path).startswith("0001_CP別_step0008_累計_"):
         build_cp_company_step0009_vertical(
             pszDirectory,
             pszTimeLabel,
