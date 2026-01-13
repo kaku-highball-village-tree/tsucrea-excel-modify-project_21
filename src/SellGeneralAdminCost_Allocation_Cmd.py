@@ -4240,6 +4240,93 @@ def build_cp_company_step0008_vertical(
     os.makedirs(pszTargetDirectory, exist_ok=True)
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
+    if pszPeriodLabel == "累計":
+        build_cp_company_step0009_vertical(
+            pszDirectory,
+            pszTimeLabel,
+        )
+    return pszOutputPath
+
+
+def append_vertical_rows_horizontally(
+    objBaseRows: List[List[str]],
+    objAppendRows: List[List[str]],
+) -> List[List[str]]:
+    if not objBaseRows:
+        return [list(objRow) for objRow in objAppendRows]
+    if not objAppendRows:
+        return [list(objRow) for objRow in objBaseRows]
+
+    iBaseRowCount: int = len(objBaseRows)
+    iAppendRowCount: int = len(objAppendRows)
+    iRowCount: int = max(iBaseRowCount, iAppendRowCount)
+    objOutputRows: List[List[str]] = []
+    for iRowIndex in range(iRowCount):
+        objBaseRow: List[str] = objBaseRows[iRowIndex] if iRowIndex < iBaseRowCount else []
+        objAppendRow: List[str] = objAppendRows[iRowIndex] if iRowIndex < iAppendRowCount else []
+        objOutputRows.append(list(objBaseRow) + list(objAppendRow))
+    return objOutputRows
+
+
+def parse_time_label_range(pszTimeLabel: str) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    objMatch = re.match(r"(\d{4})年(\d{1,2})月-(\d{4})年(\d{1,2})月", pszTimeLabel)
+    if objMatch is None:
+        return None
+    try:
+        iStartYear: int = int(objMatch.group(1))
+        iStartMonth: int = int(objMatch.group(2))
+        iEndYear: int = int(objMatch.group(3))
+        iEndMonth: int = int(objMatch.group(4))
+    except ValueError:
+        return None
+    if not (1 <= iStartMonth <= 12 and 1 <= iEndMonth <= 12):
+        return None
+    return (iStartYear, iStartMonth), (iEndYear, iEndMonth)
+
+
+def build_cp_company_step0009_vertical(
+    pszDirectory: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objRange = parse_time_label_range(pszTimeLabel)
+    if objRange is None:
+        return None
+    objStart, objEnd = objRange
+    objMonths: List[Tuple[int, int]] = build_month_sequence(objStart, objEnd)
+    if not objMonths:
+        return None
+
+    pszBasePath: str = os.path.join(
+        pszDirectory,
+        f"0001_CP別_step0008_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    if not os.path.isfile(pszBasePath):
+        return None
+    objOutputRows: List[List[str]] = read_tsv_rows(pszBasePath)
+
+    for objMonth in objMonths:
+        iYear, iMonth = objMonth
+        pszMonthLabel: str = f"{iYear}年{iMonth:02d}月"
+        pszSinglePath: str = os.path.join(
+            pszDirectory,
+            f"0001_CP別_step0008_単月_損益計算書_{pszMonthLabel}_計上カンパニー_vertical.tsv",
+        )
+        if not os.path.isfile(pszSinglePath):
+            return None
+        objSingleRows: List[List[str]] = read_tsv_rows(pszSinglePath)
+        objOutputRows = append_vertical_rows_horizontally(objOutputRows, objSingleRows)
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0001_CP別_step0009_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objOutputRows)
+
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0009")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
     return pszOutputPath
 
 
