@@ -4240,11 +4240,6 @@ def build_cp_company_step0008_vertical(
     os.makedirs(pszTargetDirectory, exist_ok=True)
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
-    if pszPeriodLabel == "累計":
-        build_cp_company_step0009_vertical(
-            pszDirectory,
-            pszTimeLabel,
-        )
     return pszOutputPath
 
 
@@ -4282,6 +4277,13 @@ def parse_time_label_range(pszTimeLabel: str) -> Optional[Tuple[Tuple[int, int],
     if not (1 <= iStartMonth <= 12 and 1 <= iEndMonth <= 12):
         return None
     return (iStartYear, iStartMonth), (iEndYear, iEndMonth)
+
+
+def ensure_cp_step0009_directory() -> str:
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0009")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    return pszTargetDirectory
 
 
 def build_cp_company_step0009_vertical(
@@ -4322,9 +4324,7 @@ def build_cp_company_step0009_vertical(
     )
     write_tsv_rows(pszOutputPath, objOutputRows)
 
-    pszScriptDirectory: str = os.path.dirname(__file__)
-    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0001_CP別_step0009")
-    os.makedirs(pszTargetDirectory, exist_ok=True)
+    pszTargetDirectory: str = ensure_cp_step0009_directory()
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
     return pszOutputPath
@@ -4354,11 +4354,19 @@ def try_create_cp_company_step0008_vertical(pszStep0007Path: str) -> Optional[st
     if pszCompanyLabel not in objAllowedCompanies:
         return None
     pszDirectory: str = os.path.dirname(pszStep0007Path)
-    return build_cp_company_step0008_vertical(
+    pszStep0008Path: Optional[str] = build_cp_company_step0008_vertical(
         pszDirectory,
         pszPeriodLabel,
         pszTimeLabel,
     )
+    if pszStep0008Path is None:
+        return None
+    if pszPeriodLabel == "累計":
+        build_cp_company_step0009_vertical(
+            pszDirectory,
+            pszTimeLabel,
+        )
+    return pszStep0008Path
 
 
 def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]:
