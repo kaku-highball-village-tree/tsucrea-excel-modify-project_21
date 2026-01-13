@@ -4291,10 +4291,25 @@ def ensure_cp_step0009_directory() -> str:
     return pszTargetDirectory
 
 
+def ensure_cp_group_step0009_directory() -> str:
+    pszScriptDirectory: str = os.path.dirname(__file__)
+    pszTargetDirectory: str = os.path.join(pszScriptDirectory, "0002_CP別_step0009")
+    os.makedirs(pszTargetDirectory, exist_ok=True)
+    return pszTargetDirectory
+
+
 def copy_cp_step0009_file(pszOutputPath: str) -> None:
     if not pszOutputPath or not os.path.isfile(pszOutputPath):
         return
     pszTargetDirectory: str = ensure_cp_step0009_directory()
+    pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
+    shutil.copy2(pszOutputPath, pszTargetPath)
+
+
+def copy_cp_group_step0009_file(pszOutputPath: str) -> None:
+    if not pszOutputPath or not os.path.isfile(pszOutputPath):
+        return
+    pszTargetDirectory: str = ensure_cp_group_step0009_directory()
     pszTargetPath: str = os.path.join(pszTargetDirectory, os.path.basename(pszOutputPath))
     shutil.copy2(pszOutputPath, pszTargetPath)
 
@@ -4337,6 +4352,47 @@ def build_cp_company_step0009_vertical(
     )
     write_tsv_rows(pszOutputPath, objOutputRows)
     copy_cp_step0009_file(pszOutputPath)
+    return pszOutputPath
+
+
+def build_cp_group_step0009_vertical(
+    pszDirectory: str,
+    pszTimeLabel: str,
+) -> Optional[str]:
+    objRange = parse_time_label_range(pszTimeLabel)
+    if objRange is None:
+        return None
+    objStart, objEnd = objRange
+    objMonths: List[Tuple[int, int]] = build_month_sequence(objStart, objEnd)
+    if not objMonths:
+        return None
+
+    pszBasePath: str = os.path.join(
+        pszDirectory,
+        f"0002_CP別_step0008_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    if not os.path.isfile(pszBasePath):
+        return None
+    objOutputRows: List[List[str]] = read_tsv_rows(pszBasePath)
+
+    for objMonth in objMonths:
+        iYear, iMonth = objMonth
+        pszMonthLabel: str = f"{iYear}年{iMonth:02d}月"
+        pszSinglePath: str = os.path.join(
+            pszDirectory,
+            f"0002_CP別_step0008_単月_損益計算書_{pszMonthLabel}_計上カンパニー_vertical.tsv",
+        )
+        if not os.path.isfile(pszSinglePath):
+            return None
+        objSingleRows: List[List[str]] = read_tsv_rows(pszSinglePath)
+        objOutputRows = append_vertical_rows_horizontally(objOutputRows, objSingleRows)
+
+    pszOutputPath: str = os.path.join(
+        pszDirectory,
+        f"0002_CP別_step0009_累計_損益計算書_{pszTimeLabel}_計上カンパニー_vertical.tsv",
+    )
+    write_tsv_rows(pszOutputPath, objOutputRows)
+    copy_cp_group_step0009_file(pszOutputPath)
     return pszOutputPath
 
 
@@ -4397,11 +4453,19 @@ def try_create_cp_group_step0008_vertical(pszStep0007Path: str) -> Optional[str]
     if pszGroupLabel != objTriggerGroup:
         return None
     pszDirectory: str = os.path.dirname(pszStep0007Path)
-    return build_cp_group_step0008_vertical(
+    pszStep0008Path = build_cp_group_step0008_vertical(
         pszDirectory,
         pszPeriodLabel,
         pszTimeLabel,
     )
+    if pszStep0008Path is None:
+        return None
+    if pszPeriodLabel == "累計":
+        build_cp_group_step0009_vertical(
+            pszDirectory,
+            pszTimeLabel,
+        )
+    return pszStep0008Path
 
 
 def create_cp_step0007_file_company(pszStep0006Path: str, pszPrefix: str) -> None:
